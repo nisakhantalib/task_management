@@ -15,26 +15,40 @@ A Java desktop application for managing tasks and users using SQLite database.
 ## Prerequisites
 
 - Java 11 or higher
-- Maven
-- SQLite
+- IntelliJ IDEA
 
 ## Installation & Setup
 
-1. Clone the repository
+### Option 1: Using IntelliJ IDEA (Recommended)
+1. Open IntelliJ IDEA
+2. Clone the repository
+   - Go to File → New → Project from Version Control
+   - URL: https://github.com/nisakhantalib/task_management.git
+   - Choose directory for your project
+   - Click "Clone"
+3. When prompted "Trust and Open Project", click "Trust Project"
+4. Wait for IntelliJ to import and index the project
+5. Build and Run
+   - In the Project Explorer, navigate to `src/main/java/com/taskmanager/ui/MainWindow.java`
+   - Right-click on `MainWindow.java`
+   - Select "Run 'MainWindow.main()'"
+
+
+Option 2: Using Maven CLI 
+If you prefer using command line:
+
+Install Maven from https://maven.apache.org/download.cgi
+Add Maven to system environment variables
+Run the following commands:
+
 ```bash
 git clone https://github.com/nisakhantalib/task_management.git
-cd task-management
-```
-
-2. Build the project
-```bash
+cd task-management-system
 mvn clean package
-```
-
-3. Run the application
-```bash
 java -jar target/task-management-1.0.jar
 ```
+
+
 
 ## Usage Guide
 
