@@ -8,11 +8,13 @@ import java.util.List;
 
 public class TaskDAO {
     public void createTask(Task task) throws SQLException {
+        // SQL query to insert a new task with required fields
         String sql = "INSERT INTO Tasks (title, description, status, assigned_to) VALUES (?, ?, ?, ?)";
 
+        // Use try-with-resources to automatically close database resource
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+            // Set parameters for the prepared statement using task object properties
             pstmt.setString(1, task.getTitle());
             pstmt.setString(2, task.getDescription());
             pstmt.setString(3, task.getStatus());
@@ -26,18 +28,24 @@ public class TaskDAO {
         String sql = "SELECT * FROM Tasks";
 
         try (Connection conn = DatabaseConnection.getConnection();
+             //it's used for static SQL that doesn't need parameters (As opposed to pstmt)
              Statement stmt = conn.createStatement();
+             // execute query and store the result in RS, which is a curesor that can be iterated
              ResultSet rs = stmt.executeQuery(sql)) {
 
+            // rs.next() moves cursor to next row and returns false when no more rows
             while (rs.next()) {
+                // Create new Task object from current row's data
                 Task task = new Task(
                         rs.getString("title"),
                         rs.getString("description"),
                         rs.getString("status"),
                         rs.getInt("assigned_to")
                 );
+                // Set additional fields that aren't part of the constructor
                 task.setTaskId(rs.getInt("task_id"));
                 task.setCreatedDate(rs.getString("created_date"));
+                // Add task object to list
                 tasks.add(task);
             }
         }
@@ -46,10 +54,12 @@ public class TaskDAO {
 
     public List<Task> getTasksByStatus(String status) throws SQLException {
         List<Task> tasks = new ArrayList<>();
+        // SQL query with WHERE clause to filter by status
         String sql = "SELECT * FROM Tasks WHERE status = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
 
             pstmt.setString(1, status);
             ResultSet rs = pstmt.executeQuery();

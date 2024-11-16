@@ -21,6 +21,7 @@ public class TaskPanel extends JPanel {
     private UserDAO userDAO;
 
     public TaskPanel() {
+        // Instantiate DAO objects to interact with the database
         taskDAO = new TaskDAO();
         userDAO = new UserDAO();
 
@@ -52,19 +53,22 @@ public class TaskPanel extends JPanel {
     }
 
     private JPanel createFormPanel() {
+        // Use GridBagLayout for flexible layout
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Add New Task"));
         GridBagConstraints gbc = new GridBagConstraints();
+        // Padding between components
         gbc.insets = new Insets(5, 5, 5, 5);
+        // Make components fill horizontally
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Title
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0; gbc.gridy = 0; //Col=0, Row=0
         formPanel.add(new JLabel("Title:"), gbc);
 
         titleField = new JTextField(30);
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.gridx = 1; // Col=1
+        gbc.weightx = 1.0; // Allow horizontal expansion
         formPanel.add(titleField, gbc);
 
         // Description
@@ -72,8 +76,10 @@ public class TaskPanel extends JPanel {
         gbc.weightx = 0.0;
         formPanel.add(new JLabel("Description:"), gbc);
 
+        // Create a text area with 3 rows and 30 columns
         descriptionArea = new JTextArea(3, 30);
         descriptionArea.setLineWrap(true);
+        // Add a scroll pane for the text area
         JScrollPane scrollPane = new JScrollPane(descriptionArea);
         gbc.gridx = 1;
         gbc.weightx = 1.0;
@@ -92,12 +98,14 @@ public class TaskPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 3;
         formPanel.add(new JLabel("Assign To:"), gbc);
 
+        // Dropdown for users
         assigneeCombo = new JComboBox<>();
+        // Load users into the dropdown
         loadUsers();
         gbc.gridx = 1;
         formPanel.add(assigneeCombo, gbc);
 
-        // Add Button
+        // Add button to submit the form and add a task
         JButton addButton = new JButton("Add Task");
         addButton.addActionListener(e -> addTask());
         gbc.gridx = 1; gbc.gridy = 4;
@@ -137,6 +145,10 @@ public class TaskPanel extends JPanel {
                 new String[]{"All", "Pending", "In Progress", "Completed"});
         filterCombo.addActionListener(e -> {
             String status = (String)filterCombo.getSelectedItem();
+
+            // Check if the selected status is "All".
+            // If so, pass `null` to the `refreshTaskTable` method to load all tasks.
+            // Otherwise, pass the selected status to filter tasks based on that status.
             refreshTaskTable("All".equals(status) ? null : status);
         });
         filterPanel.add(filterCombo);

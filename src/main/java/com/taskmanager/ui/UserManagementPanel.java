@@ -1,4 +1,3 @@
-// UserManagementPanel.java
 package com.taskmanager.ui;
 
 import com.taskmanager.dao.UserDAO;
@@ -8,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 /**
  * Panel for managing users in the Task Management System.
@@ -15,17 +15,24 @@ import java.sql.SQLException;
  */
 public class UserManagementPanel extends JPanel {
     // UI Components
-    private JTextField usernameField;      // Field for entering username
-    private JPasswordField passwordField;   // Secure field for entering password
-    private JTextField emailField;          // Field for entering email
-    private JTable userTable;              // Table to display users
-    private UserDAO userDAO;               // Data Access Object for user operations
-    private Runnable onUserUpdated;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JTextField emailField;
+    private JTable userTable;
+    private UserDAO userDAO;
+    private TaskPanel taskPanel;  // Direct reference to TaskPanel
 
-    public UserManagementPanel(Runnable onUserUpdated) {
-        this.onUserUpdated = onUserUpdated;
+    // Regex pattern for validating email
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
+    // Regex pattern for validating password
+    private static final String PASSWORD_REGEX = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!~*()?]).{4,20}$";
+
+    private static final String USERNAME_REGEX="^[a-zA-Z0-9_]{3,}$";
+
+    public UserManagementPanel(TaskPanel taskPanel) {
+        this.taskPanel = taskPanel;
         userDAO = new UserDAO();
-        // Set layout with 10-pixel spacing
         setLayout(new BorderLayout(10, 10));
 
         // Create and add the form panel to the top
@@ -42,16 +49,18 @@ public class UserManagementPanel extends JPanel {
      * @return JPanel containing the input form
      */
     private JPanel createFormPanel() {
-        // Create panel with 4 rows, 2 columns, and 5-pixel spacing
         JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Add New User"));
 
-        // Initialize input fields
         usernameField = new JTextField(20);
         passwordField = new JPasswordField(20);
         emailField = new JTextField(20);
 
-        // Add labels and fields to the panel
+        // Tooltips for input fields
+        usernameField.setToolTipText("Enter a unique username");
+        passwordField.setToolTipText("Enter a strong password");
+        emailField.setToolTipText("Enter a valid email address");
+
         formPanel.add(new JLabel("Username:"));
         formPanel.add(usernameField);
         formPanel.add(new JLabel("Password:"));
@@ -59,11 +68,9 @@ public class UserManagementPanel extends JPanel {
         formPanel.add(new JLabel("Email:"));
         formPanel.add(emailField);
 
-        // Create and configure Add button
         JButton addButton = new JButton("Add User");
-        addButton.addActionListener(e -> addUser()); // Lambda for click event
+        addButton.addActionListener(e -> addUser());
 
-        // Add empty panel for spacing and the button
         formPanel.add(new JPanel());
         formPanel.add(addButton);
 
@@ -74,11 +81,9 @@ public class UserManagementPanel extends JPanel {
      * Creates and initializes the user table
      */
     private void createUserTable() {
-        // Define table columns
         String[] columns = {"ID", "Username", "Email"};
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         userTable = new JTable(model);
-        // Add table to scroll pane and add to panel
         add(new JScrollPane(userTable), BorderLayout.CENTER);
     }
 
@@ -87,12 +92,11 @@ public class UserManagementPanel extends JPanel {
      * Validates input and shows appropriate messages
      */
     private void addUser() {
-        // Get input values
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
         String email = emailField.getText();
 
-        // Validate input fields
+        // Validate username, password, and email
         if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "All fields are required!",
@@ -100,24 +104,55 @@ public class UserManagementPanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
+        if (!username.matches(USERNAME_REGEX)) {
+            JOptionPane.showMessageDialog(this, "Username must be atleast 3 chars and can only contain letters, numbers, and underscores!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!isValidPassword(password)) {
+            JOptionPane.showMessageDialog(this,
+                    "Password must be at least 4 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this,
+                    "Invalid email format!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
 
         try {
-            // Create and save new user
             User user = new User(username, password, email);
             userDAO.createUser(user);
 
-            // Clear form and refresh table on success
             clearForm();
             refreshUserTable();
 
-            if (onUserUpdated != null) {
-                onUserUpdated.run();  // Refresh task panel's user dropdown
+            // Directly call TaskPanel's method to refresh the user combo box
+            if (taskPanel != null) {
+                taskPanel.refreshUserComboBox();
             }
+
             JOptionPane.showMessageDialog(this, "User added successfully!");
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this,
-                    "Error adding user: " + e.getMessage());
+                    "Error adding user: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+
+    private boolean isValidEmail(String email) {
+        return Pattern.matches(EMAIL_REGEX, email);
+    }
+    private boolean isValidPassword(String password) {
+        return Pattern.matches(PASSWORD_REGEX, password);
     }
 
     /**
@@ -130,14 +165,13 @@ public class UserManagementPanel extends JPanel {
     }
 
     /**
-     * Refreshes the user table with current data from database
+     * Refreshes the user table with current data from the database
      */
     private void refreshUserTable() {
         try {
             DefaultTableModel model = (DefaultTableModel) userTable.getModel();
             model.setRowCount(0); // Clear existing rows
 
-            // Add all users from database to table
             for (User user : userDAO.getAllUsers()) {
                 model.addRow(new Object[]{
                         user.getUserId(),
@@ -146,7 +180,6 @@ public class UserManagementPanel extends JPanel {
                 });
             }
         } catch (SQLException e) {
-            // Show error message if refresh fails
             JOptionPane.showMessageDialog(this,
                     "Error refreshing table: " + e.getMessage(),
                     "Error",
