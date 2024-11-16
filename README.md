@@ -1,4 +1,3 @@
-```markdown
 # Task Management System
 
 A Java desktop application for managing tasks and users using SQLite database.
