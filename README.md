@@ -23,7 +23,7 @@ A Java desktop application for managing tasks and users using SQLite database.
 1. Clone the repository
 ```bash
 git clone https://github.com/nisakhantalib/task_management.git
-cd task-management-system
+cd task-management
 ```
 
 2. Build the project
@@ -33,7 +33,7 @@ mvn clean package
 
 3. Run the application
 ```bash
-java -jar target/task-management-system-1.0.jar
+java -jar target/task-management-1.0.jar
 ```
 
 ## Usage Guide
